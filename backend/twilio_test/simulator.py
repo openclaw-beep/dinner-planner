@@ -32,6 +32,7 @@ class WhatsAppSimulator:
         intent = parse_booking_intent(body)
         party_size = intent.party_size
         reservation_at = intent.reservation_at
+        restaurant_name = self._normalize_restaurant_name(intent.restaurant_name)
 
         # Fallback for common cuisine-first messages like: "Italian food Friday 8pm"
         cuisine = self._extract_cuisine(body)
@@ -41,7 +42,7 @@ class WhatsAppSimulator:
         if not reservation_at:
             return self._error("Could not parse reservation date/time", body)
 
-        matches = self._search_restaurants(intent.restaurant_name, cuisine, party_size)
+        matches = self._search_restaurants(restaurant_name, cuisine, party_size)
         if not matches:
             return self._error("No matching restaurants found", body)
 
@@ -62,7 +63,7 @@ class WhatsAppSimulator:
             "status": "restaurant_contacted",
             "request_id": request_id,
             "parsed": {
-                "restaurant_name": intent.restaurant_name,
+                "restaurant_name": restaurant_name,
                 "party_size": party_size,
                 "reservation_at": reservation_at,
             },
@@ -111,6 +112,15 @@ class WhatsAppSimulator:
     def _extract_party_size(self, body: str) -> int | None:
         match = re.search(r"(?:for|party of)\s+(\d{1,2})", body, flags=re.IGNORECASE)
         return int(match.group(1)) if match else None
+
+    def _normalize_restaurant_name(self, restaurant_name: str | None) -> str | None:
+        if not restaurant_name:
+            return None
+        # Existing NLP parser can sometimes capture time strings from "at 7pm".
+        value = restaurant_name.strip()
+        if re.fullmatch(r"\d{1,2}(:\d{2})?\s*(am|pm)?", value, flags=re.IGNORECASE):
+            return None
+        return value
 
     def _search_restaurants(
         self,
