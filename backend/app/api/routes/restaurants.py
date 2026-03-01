@@ -1,11 +1,12 @@
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.models.restaurant import Restaurant
-from app.schemas.restaurant import RestaurantCreate, RestaurantRead, RestaurantSearchResponse
+from app.schemas.restaurant import RestaurantCreate, RestaurantRead, RestaurantSearchResponse, RestaurantUpdate
 from app.services.search_service import search_restaurants
 
 router = APIRouter(prefix="/restaurants", tags=["restaurants"])
@@ -14,6 +15,34 @@ router = APIRouter(prefix="/restaurants", tags=["restaurants"])
 @router.post("", response_model=RestaurantRead, status_code=201)
 def create_restaurant(payload: RestaurantCreate, db: Session = Depends(get_db)) -> Restaurant:
     restaurant = Restaurant(**payload.model_dump())
+    db.add(restaurant)
+    db.commit()
+    db.refresh(restaurant)
+    return restaurant
+
+
+@router.get("/id/{restaurant_id}", response_model=RestaurantRead)
+def get_restaurant(restaurant_id: int, db: Session = Depends(get_db)) -> Restaurant:
+    restaurant = db.scalar(select(Restaurant).where(Restaurant.id == restaurant_id))
+    if restaurant is None:
+        raise HTTPException(status_code=404, detail="Restaurant not found")
+    return restaurant
+
+
+@router.patch("/id/{restaurant_id}", response_model=RestaurantRead)
+def update_restaurant(
+    restaurant_id: int,
+    payload: RestaurantUpdate,
+    db: Session = Depends(get_db),
+) -> Restaurant:
+    restaurant = db.scalar(select(Restaurant).where(Restaurant.id == restaurant_id))
+    if restaurant is None:
+        raise HTTPException(status_code=404, detail="Restaurant not found")
+
+    updates = payload.model_dump(exclude_unset=True)
+    for field_name, value in updates.items():
+        setattr(restaurant, field_name, value)
+
     db.add(restaurant)
     db.commit()
     db.refresh(restaurant)

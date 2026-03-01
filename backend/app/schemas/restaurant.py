@@ -42,3 +42,12 @@ class RestaurantRead(BaseModel):
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class RestaurantUpdate(BaseModel):
+    name: str | None = None
+    cuisine: str | None = None
+    city: str | None = None
+    address: str | None = None
+    capacity: int | None = None
+    average_price_per_guest: Decimal | None = None

@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from datetime import datetime
+
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -10,6 +12,31 @@ from app.schemas.booking import BookingCreate, BookingRead, BookingStatusUpdateR
 from app.services.booking_service import generate_confirmation_code, has_capacity_conflict
 
 router = APIRouter(prefix="/bookings", tags=["bookings"])
+
+
+@router.get("", response_model=list[BookingRead])
+def list_bookings(
+    restaurant_id: int | None = Query(None),
+    status_filter: BookingStatus | None = Query(None, alias="status"),
+    from_time: datetime | None = Query(None),
+    to_time: datetime | None = Query(None),
+    db: Session = Depends(get_db),
+) -> list[Booking]:
+    query = select(Booking).order_by(Booking.reservation_at.desc(), Booking.id.desc())
+
+    if restaurant_id is not None:
+        query = query.where(Booking.restaurant_id == restaurant_id)
+
+    if status_filter is not None:
+        query = query.where(Booking.status == status_filter)
+
+    if from_time is not None:
+        query = query.where(Booking.reservation_at >= from_time)
+
+    if to_time is not None:
+        query = query.where(Booking.reservation_at <= to_time)
+
+    return list(db.scalars(query).all())
 
 
 @router.post("", response_model=BookingRead, status_code=201)

@@ -1,0 +1,54 @@
+{
+  "user_requests": [
+    {
+      "id": "parse_dinner",
+      "from": "whatsapp:+15550001111",
+      "body": "dinner for 4 tomorrow at 7pm"
+    },
+    {
+      "id": "search_italian",
+      "from": "whatsapp:+15550001111",
+      "body": "Italian food Friday 8pm"
+    },
+    {
+      "id": "invalid",
+      "from": "whatsapp:+15550003333",
+      "body": "book something maybe whenever"
+    }
+  ],
+  "restaurant_responses": [
+    {
+      "id": "confirm_yes",
+      "from": "whatsapp:+14155550101",
+      "body": "YES"
+    },
+    {
+      "id": "deny_no",
+      "from": "whatsapp:+14155550101",
+      "body": "NO"
+    }
+  ],
+  "restaurants": [
+    {
+      "id": "r1",
+      "name": "Pasta House",
+      "cuisine": "Italian",
+      "capacity": 18,
+      "phone_number": "whatsapp:+14155550101"
+    },
+    {
+      "id": "r2",
+      "name": "Krong Thai",
+      "cuisine": "Thai",
+      "capacity": 20,
+      "phone_number": "whatsapp:+14155550102"
+    },
+    {
+      "id": "r3",
+      "name": "Sushi Bay",
+      "cuisine": "Japanese",
+      "capacity": 12,
+      "phone_number": "whatsapp:+14155550103"
+    }
+  ]
+}
