@@ -3,7 +3,7 @@ export interface NotificationItem {
   text: string;
 }
 
-export function NotificationStack({ items }: { items: NotificationItem[] }): JSX.Element {
+export function NotificationStack({ items }: { items: NotificationItem[] }): JSX.Element | null {
   if (items.length === 0) {
     return null;
   }

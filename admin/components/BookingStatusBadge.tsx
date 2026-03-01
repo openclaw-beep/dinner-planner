@@ -6,6 +6,6 @@ const styles: Record<BookingStatus, string> = {
   denied: 'bg-rose-100 text-rose-900'
 };
 
-export function BookingStatusBadge({ status }: { status: BookingStatus }): JSX.Element {
+export function BookingStatusBadge({ status }: { status: BookingStatus }): JSX.Element | null {
   return <span className={`rounded-full px-2 py-1 text-xs font-semibold ${styles[status]}`}>{status.toUpperCase()}</span>;
 }

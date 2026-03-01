@@ -11,7 +11,7 @@ interface BookingTableProps {
   showActions?: boolean;
 }
 
-export function BookingTable({ bookings, busyId, onConfirm, onDeny, showActions = true }: BookingTableProps): JSX.Element {
+export function BookingTable({ bookings, busyId, onConfirm, onDeny, showActions = true }: BookingTableProps): JSX.Element | null {
   if (bookings.length === 0) {
     return <p className="rounded-lg bg-slate-50 p-4 text-sm text-slate-500">No bookings in this view.</p>;
   }

@@ -11,7 +11,7 @@ const navItems = [
   { href: '/bookings', label: 'Bookings' }
 ];
 
-export function AdminShell({ children }: { children: React.ReactNode }): JSX.Element {
+export function AdminShell({ children }: { children: React.ReactNode }): JSX.Element | null {
   const pathname = usePathname();
   const router = useRouter();
   const [session, setSession] = useState<AdminSession | null>(null);

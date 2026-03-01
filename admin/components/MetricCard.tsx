@@ -1,4 +1,4 @@
-export function MetricCard({ label, value, accent }: { label: string; value: string; accent: string }): JSX.Element {
+export function MetricCard({ label, value, accent }: { label: string; value: string; accent: string }): JSX.Element | null {
   return (
     <article className={`rounded-xl border p-4 ${accent}`}>
       <p className="text-xs uppercase tracking-wide">{label}</p>

@@ -1,6 +1,6 @@
 import type { Booking } from '@/types';
 
-export function CalendarView({ bookings }: { bookings: Booking[] }): JSX.Element {
+export function CalendarView({ bookings }: { bookings: Booking[] }): JSX.Element | null {
   const grouped = bookings.reduce<Record<string, Booking[]>>((acc, booking) => {
     const day = new Date(booking.reservation_at).toISOString().slice(0, 10);
     acc[day] = acc[day] ?? [];
