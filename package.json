@@ -1,0 +1,20 @@
+{
+  "name": "dinner-planner",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Dinner Planner WhatsApp bot MVP",
+  "scripts": {
+    "dev": "tsx bot/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/bot/index.js"
+  },
+  "dependencies": {
+    "@whiskeysockets/baileys": "^6.7.18",
+    "chrono-node": "^2.9.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2"
+  }
+}
