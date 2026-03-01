@@ -7,9 +7,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { clearSession, readSession, type AdminSession } from '@/lib/auth';
 
 const navItems = [
-  { href: '/admin/dashboard', label: 'Dashboard' },
-  { href: '/admin/bookings', label: 'Bookings' },
-  { href: '/admin/settings', label: 'Settings' }
+  { href: '/dashboard', label: 'Dashboard' },
+  { href: '/bookings', label: 'Bookings' }
 ];
 
 export function AdminShell({ children }: { children: React.ReactNode }): JSX.Element {
@@ -20,7 +19,7 @@ export function AdminShell({ children }: { children: React.ReactNode }): JSX.Ele
   useEffect(() => {
     const current = readSession();
     if (!current) {
-      router.replace('/admin/login');
+      router.replace('/');
       return;
     }
     setSession(current);
@@ -63,7 +62,7 @@ export function AdminShell({ children }: { children: React.ReactNode }): JSX.Ele
             className="mt-8 w-full rounded-lg border border-slate-500 px-3 py-2 text-sm hover:bg-slate-700"
             onClick={() => {
               clearSession();
-              router.replace('/admin/login');
+              router.replace('/');
             }}
           >
             Log out
