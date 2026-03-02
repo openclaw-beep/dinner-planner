@@ -1,22 +1,38 @@
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import func, select
+from fastapi.params import Depends as DependsMarker
+from sqlalchemy import and_, func, select
 from sqlalchemy.orm import Session
 
+from app.api.deps.auth import AdminContext, require_admin, resolve_admin_for_route
 from app.db.session import get_db
+from app.models.booking import Booking
+from app.models.enums import BookingStatus
 from app.models.restaurant import Restaurant
 from app.models.review import Review
 from app.models.user import User
 from app.schemas.review import RestaurantRatingResponse, RestaurantReviewItem, RestaurantReviewsResponse
-from app.schemas.restaurant import RestaurantCreate, RestaurantRead, RestaurantSearchResponse, RestaurantUpdate
+from app.schemas.restaurant import (
+    RestaurantAvailabilityResponse,
+    RestaurantAvailabilitySlot,
+    RestaurantCreate,
+    RestaurantRead,
+    RestaurantSearchResponse,
+    RestaurantUpdate,
+)
 from app.services.search_service import search_restaurants
 
 router = APIRouter(prefix="/restaurants", tags=["restaurants"])
 
 
 @router.post("", response_model=RestaurantRead, status_code=201)
-def create_restaurant(payload: RestaurantCreate, db: Session = Depends(get_db)) -> Restaurant:
+def create_restaurant(
+    payload: RestaurantCreate,
+    db: Session = Depends(get_db),
+    admin_context: AdminContext | DependsMarker = Depends(require_admin),
+) -> Restaurant:
+    resolve_admin_for_route(admin_context)
     restaurant = Restaurant(**payload.model_dump())
     db.add(restaurant)
     db.commit()
@@ -37,10 +53,14 @@ def update_restaurant(
     restaurant_id: int,
     payload: RestaurantUpdate,
     db: Session = Depends(get_db),
+    admin_context: AdminContext | DependsMarker = Depends(require_admin),
 ) -> Restaurant:
+    resolved_admin = resolve_admin_for_route(admin_context)
     restaurant = db.scalar(select(Restaurant).where(Restaurant.id == restaurant_id))
     if restaurant is None:
         raise HTTPException(status_code=404, detail="Restaurant not found")
+    if resolved_admin.restaurant_id is not None and restaurant.id != resolved_admin.restaurant_id:
+        raise HTTPException(status_code=403, detail="Restaurant outside admin scope")
 
     updates = payload.model_dump(exclude_unset=True)
     for field_name, value in updates.items():
@@ -57,7 +77,10 @@ def restaurant_search(
     date: str = Query(..., description="YYYY-MM-DD"),
     time: str = Query(..., description="HH:MM"),
     party_size: int = Query(..., gt=0),
-    city: str | None = Query(None),
+    city: str | None = None,
+    cuisine: str | None = None,
+    price: str | None = None,
+    dietary: str | None = None,
     db: Session = Depends(get_db),
 ) -> RestaurantSearchResponse:
     try:
@@ -65,7 +88,15 @@ def restaurant_search(
     except ValueError as exc:
         raise HTTPException(status_code=400, detail="Invalid date/time format") from exc
 
-    results = search_restaurants(db=db, reservation_at=reservation_at, party_size=party_size, city=city)
+    results = search_restaurants(
+        db=db,
+        reservation_at=reservation_at,
+        party_size=party_size,
+        city=city,
+        cuisine=cuisine,
+        price=price,
+        dietary=dietary,
+    )
     return RestaurantSearchResponse(date=date, time=time, party_size=party_size, results=results)
 
 
@@ -118,3 +149,59 @@ def get_restaurant_rating(restaurant_id: int, db: Session = Depends(get_db)) -> 
         average=float(avg_rating) if avg_rating is not None else 0.0,
         count=int(review_count),
     )
+
+
+@router.get("/{restaurant_id}/availability", response_model=RestaurantAvailabilityResponse)
+def get_restaurant_availability(
+    restaurant_id: int,
+    date: str = Query(..., description="YYYY-MM-DD"),
+    db: Session = Depends(get_db),
+) -> RestaurantAvailabilityResponse:
+    restaurant = db.scalar(select(Restaurant).where(Restaurant.id == restaurant_id))
+    if restaurant is None:
+        raise HTTPException(status_code=404, detail="Restaurant not found")
+
+    try:
+        target_date = datetime.fromisoformat(date).date()
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid date format, expected YYYY-MM-DD") from exc
+
+    service_hours = [17, 18, 19, 20, 21]
+    slots: list[RestaurantAvailabilitySlot] = []
+    limited_threshold = max(1, int(restaurant.capacity * 0.25))
+
+    for hour in service_hours:
+        slot_start = datetime.combine(target_date, datetime.min.time()).replace(hour=hour)
+        slot_end = slot_start.replace(hour=min(hour + 2, 23))
+
+        occupied = db.scalar(
+            select(func.coalesce(func.sum(Booking.party_size), 0)).where(
+                and_(
+                    Booking.restaurant_id == restaurant.id,
+                    Booking.status == BookingStatus.CONFIRMED,
+                    Booking.reservation_at >= slot_start,
+                    Booking.reservation_at <= slot_end,
+                )
+            )
+        )
+        spots_left = max(0, int(restaurant.capacity) - int(occupied))
+
+        if spots_left <= 0:
+            status = "full"
+            spots = 0
+        elif spots_left <= limited_threshold:
+            status = "limited"
+            spots = spots_left
+        else:
+            status = "available"
+            spots = spots_left
+
+        slots.append(
+            RestaurantAvailabilitySlot(
+                time=f"{hour:02d}:00",
+                status=status,
+                spots_left=spots,
+            )
+        )
+
+    return RestaurantAvailabilityResponse(date=date, slots=slots)

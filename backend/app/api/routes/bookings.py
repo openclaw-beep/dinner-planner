@@ -1,9 +1,19 @@
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi.params import Depends as DependsMarker
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.api.deps.auth import (
+    AdminContext,
+    AuthenticatedUser,
+    require_admin,
+    require_user,
+    resolve_admin_for_route,
+    resolve_user_id_for_route,
+)
+from app.core.security import sanitize_text
 from app.db.session import get_db
 from app.models.booking import Booking
 from app.models.enums import BookingStatus
@@ -23,11 +33,15 @@ def list_bookings(
     from_time: datetime | None = Query(None),
     to_time: datetime | None = Query(None),
     db: Session = Depends(get_db),
+    admin_context: AdminContext | DependsMarker = Depends(require_admin),
 ) -> list[Booking]:
+    resolved_admin = resolve_admin_for_route(admin_context)
     query = select(Booking).order_by(Booking.reservation_at.desc(), Booking.id.desc())
 
     if restaurant_id is not None:
         query = query.where(Booking.restaurant_id == restaurant_id)
+    elif resolved_admin.restaurant_id is not None:
+        query = query.where(Booking.restaurant_id == resolved_admin.restaurant_id)
 
     if status_filter is not None:
         query = query.where(Booking.status == status_filter)
@@ -42,7 +56,12 @@ def list_bookings(
 
 
 @router.post("", response_model=BookingRead, status_code=201)
-def create_booking(payload: BookingCreate, db: Session = Depends(get_db)) -> Booking:
+def create_booking(
+    payload: BookingCreate,
+    db: Session = Depends(get_db),
+    current_user: AuthenticatedUser | DependsMarker = Depends(require_user),
+) -> Booking:
+    request_user_id = resolve_user_id_for_route(db=db, current_user=current_user, fallback_user_id=payload.user_id)
     restaurant = db.scalar(select(Restaurant).where(Restaurant.id == payload.restaurant_id))
     if restaurant is None:
         raise HTTPException(status_code=404, detail="Restaurant not found")
@@ -54,7 +73,10 @@ def create_booking(payload: BookingCreate, db: Session = Depends(get_db)) -> Boo
         raise HTTPException(status_code=409, detail="Restaurant capacity unavailable for requested time")
 
     booking = Booking(
-        **payload.model_dump(),
+        user_id=request_user_id,
+        restaurant_id=payload.restaurant_id,
+        reservation_at=payload.reservation_at,
+        party_size=payload.party_size,
         confirmation_code=generate_confirmation_code(db),
         status=BookingStatus.PENDING,
     )
@@ -68,14 +90,16 @@ def create_booking(payload: BookingCreate, db: Session = Depends(get_db)) -> Boo
 def create_booking_review(
     booking_id: int,
     payload: ReviewCreate,
-    user_id: int = Query(..., description="Authenticated user id"),
+    user_id: int | None = Query(None, description="Authenticated user id (legacy; tests only)"),
     db: Session = Depends(get_db),
+    current_user: AuthenticatedUser | DependsMarker = Depends(require_user),
 ) -> Review:
+    request_user_id = resolve_user_id_for_route(db=db, current_user=current_user, fallback_user_id=user_id)
     booking = db.scalar(select(Booking).where(Booking.id == booking_id))
     if booking is None:
         raise HTTPException(status_code=404, detail="Booking not found")
 
-    if booking.user_id != user_id:
+    if booking.user_id != request_user_id:
         raise HTTPException(status_code=403, detail="User does not own this booking")
 
     booking_time = booking.reservation_at
@@ -94,7 +118,7 @@ def create_booking_review(
         user_id=booking.user_id,
         restaurant_id=booking.restaurant_id,
         rating=payload.rating,
-        review_text=payload.review_text,
+        review_text=sanitize_text(payload.review_text, max_length=2000) if payload.review_text else None,
         verified=True,
     )
     db.add(review)
@@ -104,18 +128,34 @@ def create_booking_review(
 
 
 @router.get("/{booking_id}", response_model=BookingRead)
-def get_booking(booking_id: int, db: Session = Depends(get_db)) -> Booking:
+def get_booking(
+    booking_id: int,
+    user_id: int | None = Query(None, description="Authenticated user id (legacy; tests only)"),
+    db: Session = Depends(get_db),
+    current_user: AuthenticatedUser | DependsMarker = Depends(require_user),
+) -> Booking:
+    request_user_id = resolve_user_id_for_route(db=db, current_user=current_user, fallback_user_id=user_id)
     booking = db.scalar(select(Booking).where(Booking.id == booking_id))
     if booking is None:
         raise HTTPException(status_code=404, detail="Booking not found")
+    if booking.user_id != request_user_id:
+        raise HTTPException(status_code=403, detail="User does not own this booking")
     return booking
 
 
 @router.post("/{booking_id}/confirm", response_model=BookingStatusUpdateResponse)
-def confirm_booking(booking_id: int, db: Session = Depends(get_db)) -> BookingStatusUpdateResponse:
+def confirm_booking(
+    booking_id: int,
+    db: Session = Depends(get_db),
+    admin_context: AdminContext | DependsMarker = Depends(require_admin),
+) -> BookingStatusUpdateResponse:
+    resolved_admin = resolve_admin_for_route(admin_context)
     booking = db.scalar(select(Booking).where(Booking.id == booking_id))
     if booking is None:
         raise HTTPException(status_code=404, detail="Booking not found")
+
+    if resolved_admin.restaurant_id is not None and booking.restaurant_id != resolved_admin.restaurant_id:
+        raise HTTPException(status_code=403, detail="Booking outside admin scope")
 
     if booking.status == BookingStatus.DENIED:
         raise HTTPException(status_code=409, detail="Denied booking cannot be confirmed")
@@ -130,10 +170,18 @@ def confirm_booking(booking_id: int, db: Session = Depends(get_db)) -> BookingSt
 
 
 @router.post("/{booking_id}/deny", response_model=BookingStatusUpdateResponse)
-def deny_booking(booking_id: int, db: Session = Depends(get_db)) -> BookingStatusUpdateResponse:
+def deny_booking(
+    booking_id: int,
+    db: Session = Depends(get_db),
+    admin_context: AdminContext | DependsMarker = Depends(require_admin),
+) -> BookingStatusUpdateResponse:
+    resolved_admin = resolve_admin_for_route(admin_context)
     booking = db.scalar(select(Booking).where(Booking.id == booking_id))
     if booking is None:
         raise HTTPException(status_code=404, detail="Booking not found")
+
+    if resolved_admin.restaurant_id is not None and booking.restaurant_id != resolved_admin.restaurant_id:
+        raise HTTPException(status_code=403, detail="Booking outside admin scope")
 
     if booking.status == BookingStatus.CONFIRMED:
         raise HTTPException(

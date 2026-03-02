@@ -1,4 +1,5 @@
 import { PriceTier } from "@/lib/restaurant-filters";
+import { readUserSession } from "@/lib/user-session";
 
 export type Restaurant = {
   id: number;
@@ -46,10 +47,10 @@ export type User = {
   id: number;
   name: string;
   phone_number: string;
+  auth_token: string;
 };
 
 export type CreateBookingRequest = {
-  user_id: number;
   restaurant_id: number;
   reservation_at: string;
   party_size: number;
@@ -100,6 +101,11 @@ export type CreateBookingReviewRequest = {
   text?: string;
 };
 
+export type RestaurantRating = {
+  average: number;
+  count: number;
+};
+
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "https://dinner-api.domain.com";
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -117,6 +123,18 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   }
 
   return (await response.json()) as T;
+}
+
+function withUserAuthHeaders(headers: HeadersInit = {}): HeadersInit {
+  const session = readUserSession();
+  if (!session) {
+    throw new Error("You must sign in before continuing.");
+  }
+
+  return {
+    ...headers,
+    "X-User-Token": session.authToken,
+  };
 }
 
 export async function searchRestaurants(params: {
@@ -173,12 +191,15 @@ export async function createUser(payload: CreateUserRequest): Promise<User> {
 export async function createBooking(payload: CreateBookingRequest): Promise<Booking> {
   return request<Booking>("/bookings", {
     method: "POST",
+    headers: withUserAuthHeaders(),
     body: JSON.stringify(payload),
   });
 }
 
 export async function getBooking(id: number): Promise<Booking> {
-  return request<Booking>(`/bookings/${id}`);
+  return request<Booking>(`/bookings/${id}`, {
+    headers: withUserAuthHeaders(),
+  });
 }
 
 export async function getRestaurantById(id: number): Promise<Restaurant> {
@@ -188,6 +209,10 @@ export async function getRestaurantById(id: number): Promise<Restaurant> {
 export async function getRestaurantAvailability(id: number, date: string): Promise<RestaurantAvailabilityResponse> {
   const query = new URLSearchParams({ date });
   return request<RestaurantAvailabilityResponse>(`/restaurants/${id}/availability?${query.toString()}`);
+}
+
+export async function getRestaurantRating(id: number): Promise<RestaurantRating> {
+  return request<RestaurantRating>(`/restaurants/${id}/rating`);
 }
 
 function normalizeReview(raw: RawReview, index: number): Review {
@@ -207,9 +232,10 @@ export async function getRestaurantReviews(
 ): Promise<GetRestaurantReviewsResponse> {
   const page = options.page ?? 1;
   const limit = options.limit ?? 5;
+  const offset = Math.max(0, page - 1) * limit;
   const query = new URLSearchParams({
-    page: String(page),
     limit: String(limit),
+    offset: String(offset),
   });
 
   const data = await request<unknown>(`/restaurants/${id}/reviews?${query.toString()}`);
@@ -225,7 +251,9 @@ export async function getRestaurantReviews(
     const normalized = Array.isArray(reviewList)
       ? reviewList.map((item, index) => normalizeReview(item as RawReview, index))
       : [];
-    const hasMore = Boolean(record.has_more ?? record.hasMore ?? record.next_page);
+    const hasMoreValue = record.has_more ?? record.hasMore ?? record.next_page;
+    const hasMore =
+      typeof hasMoreValue === "boolean" ? hasMoreValue : normalized.length === limit;
     return { reviews: normalized, hasMore };
   }
 
@@ -235,6 +263,7 @@ export async function getRestaurantReviews(
 export async function createBookingReview(bookingId: number, payload: CreateBookingReviewRequest): Promise<Review> {
   const data = await request<RawReview>(`/bookings/${bookingId}/review`, {
     method: "POST",
+    headers: withUserAuthHeaders(),
     body: JSON.stringify({
       rating: payload.rating,
       review_text: payload.text?.trim() || undefined,
