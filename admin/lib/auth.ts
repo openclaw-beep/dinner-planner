@@ -3,6 +3,7 @@ const STORAGE_KEY = 'restaurant-admin-session';
 export interface AdminSession {
   restaurantId: number;
   label: string;
+  apiToken: string;
 }
 
 export function readSession(): AdminSession | null {
@@ -17,7 +18,11 @@ export function readSession(): AdminSession | null {
 
   try {
     const parsed = JSON.parse(raw) as AdminSession;
-    if (Number.isFinite(parsed.restaurantId)) {
+    if (
+      Number.isFinite(parsed.restaurantId) &&
+      typeof parsed.apiToken === 'string' &&
+      parsed.apiToken.length > 5
+    ) {
       return parsed;
     }
     return null;

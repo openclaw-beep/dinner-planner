@@ -1,8 +1,10 @@
 from datetime import date, timedelta
 
 from fastapi import APIRouter, Depends, Header, HTTPException
+from fastapi.params import Depends as DependsMarker
 from sqlalchemy.orm import Session
 
+from app.api.deps.auth import AdminContext, require_admin, resolve_admin_for_route
 from app.core.config import settings
 from app.db.session import get_db
 from app.schemas.invoice import InvoiceRead
@@ -26,10 +28,18 @@ def whatsapp_webhook(
 
 
 @router.post("/invoices/monthly", response_model=list[InvoiceRead])
-def generate_monthly_invoices(db: Session = Depends(get_db), month: str | None = None) -> list[InvoiceRead]:
+def generate_monthly_invoices(
+    db: Session = Depends(get_db),
+    month: str | None = None,
+    admin_context: AdminContext | DependsMarker = Depends(require_admin),
+) -> list[InvoiceRead]:
+    resolve_admin_for_route(admin_context)
     if month:
-        year, month_value = map(int, month.split("-"))
-        period_start = date(year, month_value, 1)
+        try:
+            year, month_value = map(int, month.split("-"))
+            period_start = date(year, month_value, 1)
+        except (TypeError, ValueError) as exc:
+            raise HTTPException(status_code=400, detail="Invalid month format, expected YYYY-MM") from exc
     else:
         today = date.today().replace(day=1)
         period_start = (today - timedelta(days=1)).replace(day=1)

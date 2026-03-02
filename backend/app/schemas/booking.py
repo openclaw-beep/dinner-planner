@@ -6,10 +6,10 @@ from app.models.enums import BookingStatus
 
 
 class BookingCreate(BaseModel):
-    user_id: int
+    user_id: int | None = None
     restaurant_id: int
     reservation_at: datetime
-    party_size: int = Field(gt=0)
+    party_size: int = Field(gt=0, le=30)
 
 
 class BookingRead(BaseModel):

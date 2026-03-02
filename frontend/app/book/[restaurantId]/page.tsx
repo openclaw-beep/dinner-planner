@@ -4,6 +4,7 @@ import { FormEvent, useMemo, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { createBooking, createUser } from "@/lib/api";
 import { TimeSlotPicker } from "@/components/TimeSlotPicker";
+import { writeUserSession } from "@/lib/user-session";
 
 function formatDisplayTime(time: string): string {
   const isoTimeMatch = time.match(/^(\d{2}):(\d{2})(?::\d{2})?$/);
@@ -92,9 +93,9 @@ export default function BookingPage() {
         name,
         phone_number: phoneNumber,
       });
+      writeUserSession({ userId: user.id, authToken: user.auth_token });
 
       const booking = await createBooking({
-        user_id: user.id,
         restaurant_id: restaurantId,
         reservation_at: reservationISO,
         party_size: partySize,

@@ -12,6 +12,7 @@ class User(Base):
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     name: Mapped[str] = mapped_column(String(120), nullable=False)
     phone_number: Mapped[str] = mapped_column(String(32), unique=True, index=True, nullable=False)
+    auth_token: Mapped[str] = mapped_column(String(128), unique=True, index=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False
     )

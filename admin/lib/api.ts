@@ -1,12 +1,23 @@
 import type { Booking, BookingStatus, BookingStatusUpdateResponse, Restaurant } from '@/types';
+import { readSession } from '@/lib/auth';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8000';
 
 async function http<T>(path: string, init?: RequestInit): Promise<T> {
+  const session = typeof window !== 'undefined' ? readSession() : null;
+  const authHeaders =
+    session && path !== '/health'
+      ? {
+          'X-Admin-Token': session.apiToken,
+          'X-Restaurant-Id': String(session.restaurantId)
+        }
+      : {};
+
   const response = await fetch(`${API_BASE}${path}`, {
     ...init,
     headers: {
       'Content-Type': 'application/json',
+      ...authHeaders,
       ...(init?.headers ?? {})
     },
     cache: 'no-store'

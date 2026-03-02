@@ -10,6 +10,7 @@ export function AdminLoginForm(): JSX.Element {
   const router = useRouter();
   const [restaurantId, setRestaurantId] = useState('1');
   const [label, setLabel] = useState('My Restaurant');
+  const [apiToken, setApiToken] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -24,10 +25,14 @@ export function AdminLoginForm(): JSX.Element {
       if (!Number.isFinite(parsedId) || parsedId <= 0) {
         throw new Error('Restaurant ID must be a positive number.');
       }
+      if (!apiToken.trim()) {
+        throw new Error('Admin API token is required.');
+      }
 
       writeSession({
         restaurantId: parsedId,
-        label: label.trim() || `Restaurant ${parsedId}`
+        label: label.trim() || `Restaurant ${parsedId}`,
+        apiToken: apiToken.trim()
       });
 
       router.push('/dashboard');
@@ -73,6 +78,18 @@ export function AdminLoginForm(): JSX.Element {
               className="mt-1 min-h-12 w-full rounded-xl border border-white/30 bg-white/20 px-4 py-3 text-white placeholder:text-white/70 backdrop-blur-sm outline-none transition focus:border-dinner-gold focus:ring-4 focus:ring-dinner-gold/20"
               inputMode="numeric"
               aria-label="Restaurant ID"
+            />
+          </label>
+
+          <label className="block text-sm font-medium text-white">
+            Admin API Token
+            <input
+              value={apiToken}
+              onChange={(event) => setApiToken(event.target.value)}
+              className="mt-1 min-h-12 w-full rounded-xl border border-white/30 bg-white/20 px-4 py-3 text-white placeholder:text-white/70 backdrop-blur-sm outline-none transition focus:border-dinner-gold focus:ring-4 focus:ring-dinner-gold/20"
+              placeholder="Enter admin token"
+              aria-label="Admin API Token"
+              required
             />
           </label>
 
