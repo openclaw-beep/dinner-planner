@@ -127,6 +127,27 @@ export function SearchFilters({ value, onChange, onClearAll }: SearchFiltersProp
           })}
         </div>
       </div>
+
+      <div className="mt-4">
+        <p className="text-xs font-semibold uppercase tracking-wide text-ink/60">Seating</p>
+        <button
+          type="button"
+          onClick={() =>
+            onChange({
+              ...value,
+              outdoorSeating: !value.outdoorSeating,
+            })
+          }
+          className={`mt-2 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium transition ${
+            value.outdoorSeating
+              ? "border-emerald-700 bg-emerald-700 text-white"
+              : "border-ink/20 bg-white text-ink hover:border-emerald-700/40 hover:bg-emerald-50"
+          }`}
+        >
+          <span aria-hidden>{value.outdoorSeating ? "🌿" : "🪑"}</span>
+          <span>Outdoor Seating</span>
+        </button>
+      </div>
     </section>
   );
 }

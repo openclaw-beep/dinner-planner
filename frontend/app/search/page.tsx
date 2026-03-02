@@ -35,7 +35,7 @@ export default function SearchPage() {
     cuisines: parseCsvParam(params.get("cuisine")),
     prices: parseCsvParam(params.get("price")) as PriceTier[],
     dietaryOptions: parseCsvParam(params.get("dietary")),
-    outdoorSeating: false,
+    outdoorSeating: params.get("outdoor") === "true",
     ambiance: [],
   }));
 
@@ -57,8 +57,12 @@ export default function SearchPage() {
       query.set("dietary", filters.dietaryOptions.join(","));
     }
 
+    if (filters.outdoorSeating) {
+      query.set("outdoor", "true");
+    }
+
     router.replace(`${pathname}?${query.toString()}`, { scroll: false });
-  }, [date, time, partySize, filters.cuisines, filters.prices, filters.dietaryOptions, pathname, router]);
+  }, [date, time, partySize, filters.cuisines, filters.prices, filters.dietaryOptions, filters.outdoorSeating, pathname, router]);
 
   useEffect(() => {
     let cancelled = false;
@@ -81,6 +85,7 @@ export default function SearchPage() {
           cuisines: filters.cuisines,
           prices: filters.prices,
           dietaryOptions: filters.dietaryOptions,
+          outdoorSeating: filters.outdoorSeating,
         });
 
         if (!cancelled) {
@@ -104,7 +109,7 @@ export default function SearchPage() {
     return () => {
       cancelled = true;
     };
-  }, [date, time, partySize, filters.cuisines, filters.prices, filters.dietaryOptions]);
+  }, [date, time, partySize, filters.cuisines, filters.prices, filters.dietaryOptions, filters.outdoorSeating]);
 
   const filteredResults = useMemo(() => {
     let nextResults = [...results];
@@ -126,8 +131,12 @@ export default function SearchPage() {
       });
     }
 
+    if (filters.outdoorSeating) {
+      nextResults = nextResults.filter((restaurant) => restaurant.outdoor_seating);
+    }
+
     return nextResults;
-  }, [results, filters.cuisines, filters.prices, filters.dietaryOptions]);
+  }, [results, filters.cuisines, filters.prices, filters.dietaryOptions, filters.outdoorSeating]);
 
   function handleClearAll() {
     setFilters({

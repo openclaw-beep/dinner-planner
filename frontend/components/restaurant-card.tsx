@@ -40,6 +40,12 @@ export function RestaurantCard({ restaurant, date, time, partySize }: Restaurant
         </div>
       ) : null}
 
+      {restaurant.outdoor_seating ? (
+        <div className="mt-2 inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-900">
+          <span aria-hidden>🌿</span> Outdoor Seating
+        </div>
+      ) : null}
+
       <p className="mt-4 text-sm text-ink/80">{restaurant.address}</p>
       <p className="mt-1 text-sm text-ink/60">{restaurant.city}</p>
 
