@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "../styles/main.scss";
 
 export const metadata: Metadata = {
   title: "Dinner Planner",
@@ -13,7 +14,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="bg-base text-ink antialiased">{children}</body>
+      <body className="antialiased">{children}</body>
     </html>
   );
 }

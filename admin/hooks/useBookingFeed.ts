@@ -13,6 +13,8 @@ export interface UseBookingFeedResult {
   busyId: number | null;
   error: string | null;
   notifications: Array<{ id: number; text: string }>;
+  successMessage: string;
+  celebrationKey: number;
   refresh: () => Promise<void>;
   confirm: (bookingId: number) => Promise<void>;
   deny: (bookingId: number) => Promise<void>;
@@ -23,6 +25,8 @@ export function useBookingFeed(restaurantId: number | null): UseBookingFeedResul
   const [busyId, setBusyId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notifications, setNotifications] = useState<Array<{ id: number; text: string }>>([]);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [celebrationKey, setCelebrationKey] = useState(0);
   const seenPendingIdsRef = useRef<Set<number>>(new Set());
 
   const refresh = useCallback(async () => {
@@ -77,12 +81,22 @@ export function useBookingFeed(restaurantId: number | null): UseBookingFeedResul
     return () => window.clearTimeout(timer);
   }, [notifications]);
 
+  useEffect(() => {
+    if (!successMessage) {
+      return;
+    }
+    const timer = window.setTimeout(() => setSuccessMessage(''), 2200);
+    return () => window.clearTimeout(timer);
+  }, [successMessage]);
+
   const confirm = useCallback(
     async (bookingId: number) => {
       setBusyId(bookingId);
       try {
         await confirmBooking(bookingId);
         await refresh();
+        setSuccessMessage(`Booking #${bookingId} confirmed.`);
+        setCelebrationKey((current) => current + 1);
       } catch (confirmError) {
         setError(confirmError instanceof Error ? confirmError.message : 'Failed to confirm booking.');
       } finally {
@@ -98,6 +112,7 @@ export function useBookingFeed(restaurantId: number | null): UseBookingFeedResul
       try {
         await denyBooking(bookingId);
         await refresh();
+        setSuccessMessage(`Booking #${bookingId} denied.`);
       } catch (denyError) {
         setError(denyError instanceof Error ? denyError.message : 'Failed to deny booking.');
       } finally {
@@ -111,5 +126,5 @@ export function useBookingFeed(restaurantId: number | null): UseBookingFeedResul
   const confirmed = useMemo(() => bookings.filter((item) => item.status === 'confirmed'), [bookings]);
   const history = useMemo(() => bookings.filter((item) => item.status !== 'pending'), [bookings]);
 
-  return { bookings, pending, confirmed, history, busyId, error, notifications, refresh, confirm, deny };
+  return { bookings, pending, confirmed, history, busyId, error, notifications, successMessage, celebrationKey, refresh, confirm, deny };
 }

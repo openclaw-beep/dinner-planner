@@ -1,0 +1,73 @@
+@use '../variables' as *;
+@use '../mixins' as *;
+
+.booking-table {
+  @include glass-card(0.72, 0.2, 12px);
+  border-radius: $radius-xl;
+  overflow: hidden;
+
+  &__empty {
+    @include glass-card(0.62, 0.14, 10px);
+    border-radius: $radius-sm;
+    color: rgba($color-charcoal, 0.76);
+  }
+
+  &__header-row {
+    color: rgba($color-charcoal, 0.76);
+    border-bottom: 1px solid rgba($color-gold, 0.24);
+  }
+
+  &__row {
+    border-bottom: 1px solid rgba($color-gold, 0.11);
+
+    &:nth-child(even) {
+      background: rgba($color-white, 0.44);
+    }
+
+    &:hover {
+      background: rgba($color-gold, 0.11);
+    }
+  }
+
+  &__cell {
+    color: rgba($color-charcoal, 0.92);
+
+    &--id {
+      font-weight: 600;
+      color: $color-charcoal;
+    }
+  }
+
+  &__actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  &__btn {
+    min-height: 3rem;
+    border-radius: 0.6rem;
+    border: 0;
+    color: $color-white;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.25rem 0.75rem;
+    transition: transform 180ms ease, box-shadow 180ms ease;
+
+    &:hover:not(:disabled) {
+      transform: translateY(-1px);
+    }
+
+    &:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    &--confirm {
+      background: linear-gradient(120deg, #10b981, #059669);
+    }
+
+    &--deny {
+      background: linear-gradient(120deg, #f43f5e, #e11d48);
+    }
+  }
+}

@@ -1,0 +1,33 @@
+@use 'variables' as *;
+
+@mixin glass-card($bg-alpha: 0.14, $border-alpha: 0.24, $blur: 16px) {
+  border: 1px solid rgba($color-white, $border-alpha);
+  background: rgba($color-white, $bg-alpha);
+  backdrop-filter: blur($blur);
+  -webkit-backdrop-filter: blur($blur);
+  box-shadow: $shadow-glass;
+}
+
+@mixin gradient-button($from: $color-gold, $to: $color-burgundy) {
+  border: 0;
+  color: $color-white;
+  background: linear-gradient(120deg, $from, $to);
+  transition: transform 220ms ease, box-shadow 220ms ease, filter 220ms ease;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-1px) scale(1.01);
+    box-shadow: 0 14px 30px rgba($color-burgundy, 0.34);
+    filter: saturate(1.05);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}
+
+@mixin focus-ring {
+  outline: none;
+  border-color: rgba($color-gold, 0.82);
+  box-shadow: 0 0 0 4px rgba($color-gold, 0.22);
+}

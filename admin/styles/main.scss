@@ -1,0 +1,18 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+@use 'variables';
+@use 'mixins';
+@use 'animations';
+@use 'components/admin-shell';
+@use 'components/booking-table';
+@use 'components/metric-card';
+@use 'components/admin-login';
+@use 'components/booking-status';
+@use 'components/bookings-page';
+
+body {
+  margin: 0;
+  font-family: variables.$font-body;
+  color: variables.$color-ink;
+  background: linear-gradient(180deg, #fdf8f3 0%, #fff8f0 100%);
+}

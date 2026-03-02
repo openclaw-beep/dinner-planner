@@ -1,0 +1,108 @@
+@use '../variables' as *;
+@use '../mixins' as *;
+
+.admin-login {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 14% 20%, rgba($color-gold, 0.3), transparent 36%),
+    radial-gradient(circle at 84% 12%, rgba($color-burgundy, 0.28), transparent 30%),
+    linear-gradient(135deg, $color-charcoal 0%, $color-burgundy 100%);
+
+  &__orb {
+    position: absolute;
+    border-radius: 999px;
+    filter: blur(48px);
+    animation: float-soft 5s ease-in-out infinite;
+
+    &--gold {
+      left: -5rem;
+      top: 3rem;
+      width: 14rem;
+      height: 14rem;
+      background: rgba($color-gold, 0.3);
+    }
+
+    &--cream {
+      right: 0;
+      top: 33%;
+      width: 18rem;
+      height: 18rem;
+      background: rgba($color-white, 0.12);
+      animation-delay: 1s;
+    }
+
+    &--burgundy {
+      left: 50%;
+      bottom: 0;
+      width: 16rem;
+      height: 16rem;
+      transform: translateX(-50%);
+      background: rgba($color-burgundy, 0.5);
+      animation-delay: 2s;
+    }
+  }
+
+  &__card {
+    @include glass-card(0.12, 0.24, 16px);
+    border-radius: 1.75rem;
+    color: $color-white;
+    z-index: 1;
+    animation: soft-rise 420ms ease both;
+  }
+
+  &__logo {
+    background: linear-gradient(145deg, $color-gold, $color-burgundy);
+    box-shadow: $shadow-soft;
+  }
+
+  &__title {
+    font-family: $font-display;
+  }
+
+  &__subtitle {
+    color: rgba($color-white, 0.82);
+  }
+
+  &__label {
+    color: $color-white;
+  }
+
+  &__input {
+    border: 1px solid rgba($color-white, 0.32);
+    background: rgba($color-white, 0.18);
+    color: $color-white;
+    border-radius: $radius-sm;
+
+    &::placeholder {
+      color: rgba($color-white, 0.72);
+    }
+
+    &:focus {
+      @include focus-ring;
+    }
+  }
+
+  &__error {
+    background: rgba(#881337, 0.56);
+    color: #ffe4e6;
+    border-radius: $radius-sm;
+  }
+
+  &__submit {
+    @include gradient-button;
+    border-radius: $radius-sm;
+    font-weight: 700;
+  }
+
+  &__chip {
+    border: 1px solid rgba($color-white, 0.3);
+    background: rgba($color-white, 0.12);
+    border-radius: 999px;
+    color: rgba($color-white, 0.84);
+  }
+}

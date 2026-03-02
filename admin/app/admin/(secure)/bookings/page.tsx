@@ -42,8 +42,10 @@ export default function BookingsPage(): JSX.Element {
             key={tab.key}
             type="button"
             onClick={() => setActiveTab(tab.key)}
-            className={`rounded-lg px-3 py-1 text-sm font-medium ${
-              activeTab === tab.key ? 'bg-slate text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+            className={`min-h-12 rounded-lg px-4 py-2 text-sm font-medium transition ${
+              activeTab === tab.key
+                ? 'bg-gradient-to-r from-dinner-charcoal to-dinner-burgundy text-white'
+                : 'bg-white text-dinner-charcoal hover:bg-dinner-gold/10'
             }`}
           >
             {tab.label}

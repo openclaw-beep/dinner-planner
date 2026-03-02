@@ -2,8 +2,6 @@ app = "dinner-planner-backend"
 primary_region = "iad"
 
 [build]
-  builder = "paketobuildpacks/builder:base"
-  buildpacks = ["gcr.io/paketo-buildpacks/python"]
 
 [env]
   PORT = "8080"
@@ -21,6 +19,3 @@ primary_region = "iad"
   memory = "512mb"
   cpu_kind = "shared"
   cpus = 1
-
-[deploy]
-  release_command = "alembic upgrade head"

@@ -13,8 +13,6 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background: linear-gradient(180deg, #fefaf6 0%, #fff5ea 100%);
-  color: #13212b;
 }
 
 input,

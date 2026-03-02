@@ -1,0 +1,27 @@
+@use '../variables' as *;
+
+.booking-status {
+  display: inline-flex;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.25rem 0.625rem;
+
+  &--pending {
+    border: 1px solid #fde68a;
+    color: #92400e;
+    background: #fef3c7;
+  }
+
+  &--confirmed {
+    border: 1px solid #86efac;
+    color: #166534;
+    background: #dcfce7;
+  }
+
+  &--denied {
+    border: 1px solid #fda4af;
+    color: #9f1239;
+    background: #ffe4e6;
+  }
+}

@@ -1,0 +1,119 @@
+@use '../variables' as *;
+@use '../mixins' as *;
+
+.hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  min-height: 100vh;
+  background-size: cover;
+  background-position: center;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(circle at 8% 12%, rgba($color-gold, 0.28), transparent 36%),
+      radial-gradient(circle at 82% 18%, rgba($color-burgundy, 0.35), transparent 34%),
+      rgba(#05080d, 0.56);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    pointer-events: none;
+  }
+
+  &__container,
+  &__content,
+  &__panel {
+    position: relative;
+    z-index: 1;
+  }
+
+  &__eyebrow {
+    display: inline-flex;
+    border: 1px solid rgba($color-white, 0.3);
+    border-radius: 999px;
+    background: rgba($color-white, 0.11);
+    color: $color-cream;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.72rem;
+    font-weight: 700;
+  }
+
+  &__title {
+    font-family: $font-display;
+    background: linear-gradient(100deg, $color-gold, $color-cream, $color-burgundy);
+    background-size: 220% 220%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: gradient-shift 6s ease infinite;
+  }
+
+  &__subtitle {
+    color: rgba($color-cream, 0.92);
+  }
+
+  &__content {
+    @include glass-card(0.12, 0.24, 14px);
+    border-radius: $radius-xl;
+    animation: rise-in 450ms ease both;
+  }
+
+  &__steps {
+    @include glass-card(0.12, 0.24, 14px);
+    border-radius: $radius-xl;
+    animation: rise-in 650ms ease both;
+  }
+
+  &__timeline {
+    background: linear-gradient(to bottom, rgba($color-gold, 0.95), rgba($color-burgundy, 0.88));
+  }
+
+  &__input {
+    border: 1px solid rgba($color-white, 0.36);
+    background: rgba($color-white, 0.18);
+    color: $color-white;
+    border-radius: $radius-sm;
+
+    &::placeholder {
+      color: rgba($color-white, 0.74);
+    }
+
+    &:focus {
+      @include focus-ring;
+    }
+  }
+
+  &__submit {
+    @include gradient-button;
+    border-radius: $radius-sm;
+    font-weight: 700;
+  }
+
+  &__step-item {
+    color: rgba($color-cream, 0.9);
+  }
+
+  &__step-dot {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: $color-white;
+    background: linear-gradient(145deg, $color-gold, $color-burgundy);
+    box-shadow: $shadow-soft;
+  }
+
+  &__step-label {
+    color: $color-gold;
+  }
+
+  &__step-title {
+    color: $color-white;
+  }
+}

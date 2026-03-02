@@ -1,0 +1,38 @@
+@use '../variables' as *;
+@use '../mixins' as *;
+
+.metric-card {
+  @include glass-card(0.84, 0.2, 12px);
+  border-radius: $radius-xl;
+  transition: transform 220ms ease, box-shadow 220ms ease;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 18px 34px rgba($color-charcoal, 0.18);
+  }
+
+  &__label {
+    color: rgba($color-charcoal, 0.7);
+  }
+
+  &__icon {
+    background: rgba($color-gold, 0.2);
+    color: $color-burgundy;
+  }
+
+  &__value {
+    color: $color-charcoal;
+  }
+
+  &__trend {
+    font-weight: 700;
+
+    &--up {
+      color: #059669;
+    }
+
+    &--down {
+      color: #e11d48;
+    }
+  }
+}

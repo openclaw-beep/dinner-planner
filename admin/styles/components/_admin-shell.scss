@@ -1,0 +1,77 @@
+@use '../variables' as *;
+@use '../mixins' as *;
+
+.admin-shell {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #fdf8f3 0%, #fbf3e8 55%, #fff8f0 100%);
+  color: $color-ink;
+
+  &__layout {
+    width: min(1120px, 100%);
+  }
+
+  &__menu-toggle {
+    @include shell-gradient;
+    color: $color-white;
+    border: 0;
+    border-radius: $radius-md;
+    font-weight: 600;
+  }
+
+  &__sidebar {
+    @include shell-gradient;
+    border-radius: $radius-xl;
+    box-shadow: $shadow-glass;
+  }
+
+  &__eyebrow,
+  &__meta {
+    color: rgba($color-white, 0.72);
+  }
+
+  &__brand {
+    color: $color-white;
+  }
+
+  &__nav-link {
+    color: $color-white;
+    border-radius: $radius-sm;
+
+    &:hover {
+      background: rgba($color-white, 0.14);
+    }
+
+    &--active {
+      background: rgba($color-white, 0.23);
+    }
+  }
+
+  &__logout {
+    border-radius: $radius-sm;
+    color: $color-white;
+    border: 1px solid rgba($color-white, 0.36);
+    background: rgba($color-white, 0.06);
+
+    &:hover {
+      background: rgba($color-white, 0.14);
+    }
+  }
+
+  &__backdrop {
+    background: rgba(#03070d, 0.44);
+  }
+
+  &__content {
+    @include glass-card(0.82, 0.2, 14px);
+    border-radius: $radius-xl;
+  }
+
+  &__header {
+    border-bottom: 1px solid rgba($color-gold, 0.2);
+  }
+
+  &__title {
+    color: $color-charcoal;
+    font-family: $font-display;
+  }
+}

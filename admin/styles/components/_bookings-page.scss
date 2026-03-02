@@ -1,0 +1,32 @@
+@use '../variables' as *;
+@use '../mixins' as *;
+
+.bookings-page {
+  &__tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  &__tab {
+    min-height: 3rem;
+    border: 1px solid rgba($color-gold, 0.18);
+    border-radius: $radius-sm;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: $color-charcoal;
+    background: rgba($color-white, 0.85);
+    transition: background-color 180ms ease, color 180ms ease;
+
+    &:hover {
+      background: rgba($color-gold, 0.12);
+    }
+
+    &--active {
+      border-color: transparent;
+      color: $color-white;
+      background: linear-gradient(120deg, $color-charcoal, $color-burgundy);
+    }
+  }
+}
