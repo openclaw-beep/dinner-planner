@@ -3,6 +3,18 @@
 import { FormEvent, useMemo, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { createBooking, createUser } from "@/lib/api";
+import { TimeSlotPicker } from "@/components/TimeSlotPicker";
+
+function formatDisplayTime(time: string): string {
+  const isoTimeMatch = time.match(/^(\d{2}):(\d{2})(?::\d{2})?$/);
+  if (!isoTimeMatch) return time;
+
+  const [, rawHours, minutes] = isoTimeMatch;
+  const hourValue = Number(rawHours);
+  const period = hourValue >= 12 ? "PM" : "AM";
+  const hourDisplay = hourValue % 12 || 12;
+  return `${hourDisplay}:${minutes} ${period}`;
+}
 
 export default function BookingPage() {
   const router = useRouter();
@@ -11,12 +23,13 @@ export default function BookingPage() {
 
   const restaurantId = Number(params.restaurantId);
   const date = searchParams.get("date") ?? "";
-  const time = searchParams.get("time") ?? "";
+  const initialTime = searchParams.get("time") ?? "";
   const partySize = Number(searchParams.get("partySize") ?? "2");
   const restaurantName = searchParams.get("restaurantName") ?? `Restaurant #${restaurantId}`;
   const restaurantAddress = searchParams.get("restaurantAddress") ?? "Address unavailable";
   const restaurantCity = searchParams.get("restaurantCity") ?? "";
 
+  const [selectedTime, setSelectedTime] = useState(initialTime);
   const [name, setName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [specialRequests, setSpecialRequests] = useState("");
@@ -24,15 +37,20 @@ export default function BookingPage() {
   const [error, setError] = useState<string | null>(null);
 
   const reservationISO = useMemo(() => {
-    if (!date || !time) {
+    if (!date || !selectedTime) {
       return "";
     }
 
-    return new Date(`${date}T${time}:00`).toISOString();
-  }, [date, time]);
+    return new Date(`${date}T${selectedTime}:00`).toISOString();
+  }, [date, selectedTime]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (!selectedTime) {
+      setError("Select an available time slot before confirming your booking.");
+      return;
+    }
 
     if (!reservationISO || Number.isNaN(restaurantId) || Number.isNaN(partySize)) {
       setError("Booking details are incomplete. Return to search and try again.");
@@ -84,7 +102,7 @@ export default function BookingPage() {
             <div>
               <dt className="font-semibold">Date & Time</dt>
               <dd>
-                {date} at {time}
+                {date} at {selectedTime ? formatDisplayTime(selectedTime) : "Not selected"}
               </dd>
             </div>
             <div>
@@ -102,6 +120,18 @@ export default function BookingPage() {
         <form onSubmit={handleSubmit} className="rounded-3xl border border-ink/10 bg-white p-6 shadow-card sm:p-8">
           <h2 className="text-2xl font-semibold">Guest Information</h2>
           <p className="mt-2 text-sm text-ink/70">Your booking will be created with pending status.</p>
+
+          <div className="mt-6">
+            <TimeSlotPicker
+              restaurantId={restaurantId}
+              date={date}
+              selectedTime={selectedTime}
+              onSelectTime={(time) => {
+                setSelectedTime(time);
+                setError(null);
+              }}
+            />
+          </div>
 
           <div className="mt-6 space-y-4">
             <label className="block text-sm font-medium text-ink/80">

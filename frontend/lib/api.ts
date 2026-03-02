@@ -16,6 +16,19 @@ export type SearchRestaurantsResponse = {
   results: Restaurant[];
 };
 
+export type AvailabilityStatus = "available" | "limited" | "full";
+
+export type AvailabilitySlot = {
+  time: string;
+  status: AvailabilityStatus;
+  spots_left: number | null;
+};
+
+export type RestaurantAvailabilityResponse = {
+  date: string;
+  slots: AvailabilitySlot[];
+};
+
 export type CreateUserRequest = {
   name: string;
   phone_number: string;
@@ -103,4 +116,9 @@ export async function getBooking(id: number): Promise<Booking> {
 
 export async function getRestaurantById(id: number): Promise<Restaurant> {
   return request<Restaurant>(`/restaurants/id/${id}`);
+}
+
+export async function getRestaurantAvailability(id: number, date: string): Promise<RestaurantAvailabilityResponse> {
+  const query = new URLSearchParams({ date });
+  return request<RestaurantAvailabilityResponse>(`/restaurants/${id}/availability?${query.toString()}`);
 }

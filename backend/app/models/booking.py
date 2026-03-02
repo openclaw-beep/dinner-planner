@@ -23,3 +23,4 @@ class Booking(Base):
 
     user = relationship("User", back_populates="bookings")
     restaurant = relationship("Restaurant", back_populates="bookings")
+    review = relationship("Review", back_populates="booking", cascade="all,delete-orphan", uselist=False)

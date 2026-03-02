@@ -23,3 +23,4 @@ class Restaurant(Base):
 
     bookings = relationship("Booking", back_populates="restaurant", cascade="all,delete-orphan")
     invoices = relationship("Invoice", back_populates="restaurant", cascade="all,delete-orphan")
+    reviews = relationship("Review", back_populates="restaurant", cascade="all,delete-orphan")
