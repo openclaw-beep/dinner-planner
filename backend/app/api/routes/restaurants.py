@@ -6,6 +6,9 @@ from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.models.restaurant import Restaurant
+from app.models.review import Review
+from app.models.user import User
+from app.schemas.review import RestaurantReviewItem, RestaurantReviewsResponse
 from app.schemas.restaurant import RestaurantCreate, RestaurantRead, RestaurantSearchResponse, RestaurantUpdate
 from app.services.search_service import search_restaurants
 
@@ -64,3 +67,38 @@ def restaurant_search(
 
     results = search_restaurants(db=db, reservation_at=reservation_at, party_size=party_size, city=city)
     return RestaurantSearchResponse(date=date, time=time, party_size=party_size, results=results)
+
+
+@router.get("/{restaurant_id}/reviews", response_model=RestaurantReviewsResponse)
+def get_restaurant_reviews(
+    restaurant_id: int,
+    limit: int = Query(10, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    db: Session = Depends(get_db),
+) -> RestaurantReviewsResponse:
+    restaurant = db.scalar(select(Restaurant.id).where(Restaurant.id == restaurant_id))
+    if restaurant is None:
+        raise HTTPException(status_code=404, detail="Restaurant not found")
+
+    rows = db.execute(
+        select(Review, User.name)
+        .join(User, User.id == Review.user_id)
+        .where(Review.restaurant_id == restaurant_id)
+        .order_by(Review.created_at.desc())
+        .offset(offset)
+        .limit(limit)
+    ).all()
+
+    return RestaurantReviewsResponse(
+        reviews=[
+            RestaurantReviewItem(
+                user_name=user_name,
+                rating=review.rating,
+                review_text=review.review_text,
+                created_at=review.created_at,
+            )
+            for review, user_name in rows
+        ],
+        limit=limit,
+        offset=offset,
+    )
