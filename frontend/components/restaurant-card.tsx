@@ -30,6 +30,16 @@ export function RestaurantCard({ restaurant, date, time, partySize }: Restaurant
 
       <div className="mt-3 inline-flex rounded-md bg-ink/5 px-2 py-1 text-xs font-semibold tracking-wide text-ink/80">{priceTier}</div>
 
+      {restaurant.dietary_options?.length ? (
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {restaurant.dietary_options.slice(0, 4).map((option) => (
+            <span key={option} className="rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-amber-900">
+              {option}
+            </span>
+          ))}
+        </div>
+      ) : null}
+
       <p className="mt-4 text-sm text-ink/80">{restaurant.address}</p>
       <p className="mt-1 text-sm text-ink/60">{restaurant.city}</p>
 

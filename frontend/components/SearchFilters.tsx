@@ -1,6 +1,6 @@
 "use client";
 
-import { CUISINE_OPTIONS, PRICE_OPTIONS, PriceTier } from "@/lib/restaurant-filters";
+import { CUISINE_OPTIONS, DIETARY_OPTIONS, PRICE_OPTIONS, PriceTier } from "@/lib/restaurant-filters";
 
 type SearchFiltersState = {
   cuisines: string[];
@@ -93,6 +93,35 @@ export function SearchFilters({ value, onChange, onClearAll }: SearchFiltersProp
                 }`}
               >
                 {option}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="mt-4">
+        <p className="text-xs font-semibold uppercase tracking-wide text-ink/60">Dietary</p>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {DIETARY_OPTIONS.map((option) => {
+            const isActive = value.dietaryOptions.includes(option.value);
+
+            return (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() =>
+                  onChange({
+                    ...value,
+                    dietaryOptions: toggleArrayValue(value.dietaryOptions, option.value),
+                  })
+                }
+                className={`inline-flex items-center rounded-full border px-3 py-1.5 text-sm font-medium transition ${
+                  isActive
+                    ? "border-amber-700 bg-amber-700 text-white"
+                    : "border-ink/20 bg-white text-ink hover:border-amber-700/40 hover:bg-amber-50"
+                }`}
+              >
+                {option.label}
               </button>
             );
           })}

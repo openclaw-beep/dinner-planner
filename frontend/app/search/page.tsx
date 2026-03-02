@@ -34,7 +34,7 @@ export default function SearchPage() {
   const [filters, setFilters] = useState<SearchFiltersState>(() => ({
     cuisines: parseCsvParam(params.get("cuisine")),
     prices: parseCsvParam(params.get("price")) as PriceTier[],
-    dietaryOptions: [],
+    dietaryOptions: parseCsvParam(params.get("dietary")),
     outdoorSeating: false,
     ambiance: [],
   }));
@@ -53,8 +53,12 @@ export default function SearchPage() {
       query.set("price", filters.prices.join(","));
     }
 
+    if (filters.dietaryOptions.length) {
+      query.set("dietary", filters.dietaryOptions.join(","));
+    }
+
     router.replace(`${pathname}?${query.toString()}`, { scroll: false });
-  }, [date, time, partySize, filters.cuisines, filters.prices, pathname, router]);
+  }, [date, time, partySize, filters.cuisines, filters.prices, filters.dietaryOptions, pathname, router]);
 
   useEffect(() => {
     let cancelled = false;
@@ -76,6 +80,7 @@ export default function SearchPage() {
           partySize,
           cuisines: filters.cuisines,
           prices: filters.prices,
+          dietaryOptions: filters.dietaryOptions,
         });
 
         if (!cancelled) {
@@ -99,7 +104,7 @@ export default function SearchPage() {
     return () => {
       cancelled = true;
     };
-  }, [date, time, partySize, filters.cuisines, filters.prices]);
+  }, [date, time, partySize, filters.cuisines, filters.prices, filters.dietaryOptions]);
 
   const filteredResults = useMemo(() => {
     let nextResults = [...results];
@@ -114,8 +119,15 @@ export default function SearchPage() {
       nextResults = nextResults.filter((restaurant) => filters.prices.includes(getRestaurantPriceTier(restaurant)));
     }
 
+    if (filters.dietaryOptions.length) {
+      nextResults = nextResults.filter((restaurant) => {
+        const options = (restaurant.dietary_options ?? []).map(normalizeTag);
+        return filters.dietaryOptions.every((dietary) => options.includes(dietary));
+      });
+    }
+
     return nextResults;
-  }, [results, filters.cuisines, filters.prices]);
+  }, [results, filters.cuisines, filters.prices, filters.dietaryOptions]);
 
   function handleClearAll() {
     setFilters({
