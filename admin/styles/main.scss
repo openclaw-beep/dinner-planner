@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 @use 'variables';
 @use 'mixins';
 @use 'animations';
@@ -7,6 +11,14 @@
 @use 'components/booking-table';
 @use 'components/booking-status';
 @use 'components/bookings-page';
+
+:root {
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
 
 body {
   font-family: variables.$font-body;
