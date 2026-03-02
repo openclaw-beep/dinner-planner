@@ -1,3 +1,5 @@
+import { PriceTier } from "@/lib/restaurant-filters";
+
 export type Restaurant = {
   id: number;
   name: string;
@@ -6,6 +8,10 @@ export type Restaurant = {
   address: string;
   capacity: number;
   average_price_per_guest: number;
+  price_tier?: PriceTier;
+  outdoor_seating?: boolean;
+  dietary_options?: string[];
+  ambiance_tags?: string[];
   average_rating?: number;
   review_count?: number;
   available?: boolean;
@@ -118,6 +124,11 @@ export async function searchRestaurants(params: {
   time: string;
   partySize: number;
   city?: string;
+  cuisines?: string[];
+  prices?: PriceTier[];
+  dietaryOptions?: string[];
+  outdoorSeating?: boolean;
+  ambiance?: string[];
 }): Promise<SearchRestaurantsResponse> {
   const query = new URLSearchParams({
     date: params.date,
@@ -127,6 +138,26 @@ export async function searchRestaurants(params: {
 
   if (params.city) {
     query.set("city", params.city);
+  }
+
+  if (params.cuisines?.length) {
+    query.set("cuisine", params.cuisines.join(","));
+  }
+
+  if (params.prices?.length) {
+    query.set("price", params.prices.join(","));
+  }
+
+  if (params.dietaryOptions?.length) {
+    query.set("dietary", params.dietaryOptions.join(","));
+  }
+
+  if (params.outdoorSeating) {
+    query.set("outdoor", "true");
+  }
+
+  if (params.ambiance?.length) {
+    query.set("ambiance", params.ambiance.join(","));
   }
 
   return request<SearchRestaurantsResponse>(`/restaurants/search?${query.toString()}`);
