@@ -4,7 +4,7 @@ from decimal import Decimal
 from fastapi import HTTPException
 
 from app.api.routes.bookings import confirm_booking, create_booking, create_booking_review
-from app.api.routes.restaurants import create_restaurant, get_restaurant_reviews
+from app.api.routes.restaurants import create_restaurant, get_restaurant_rating, get_restaurant_reviews
 from app.api.routes.users import create_user
 from app.schemas.booking import BookingCreate
 from app.schemas.restaurant import RestaurantCreate
@@ -169,3 +169,41 @@ def test_get_restaurant_reviews_supports_limit_and_offset(db_session):
     assert response.offset == 1
     assert len(response.reviews) == 1
     assert response.reviews[0].user_name == "User Two"
+
+
+def test_get_restaurant_rating_returns_average_and_count(db_session):
+    user_ids = [
+        _create_user(db_session, "Rater One", "+15551110010"),
+        _create_user(db_session, "Rater Two", "+15551110011"),
+        _create_user(db_session, "Rater Three", "+15551110012"),
+    ]
+    restaurant_id = _create_restaurant(db_session)
+    ratings = [5, 4, 3]
+
+    for idx, user_id in enumerate(user_ids):
+        booking_id = _create_and_confirm_booking(
+            db_session,
+            user_id,
+            restaurant_id,
+            datetime.utcnow() - timedelta(days=8 - idx),
+        )
+        create_booking_review(
+            booking_id=booking_id,
+            payload=ReviewCreate(rating=ratings[idx], review_text=f"Rating {ratings[idx]}"),
+            user_id=user_id,
+            db=db_session,
+        )
+
+    response = get_restaurant_rating(restaurant_id=restaurant_id, db=db_session)
+
+    assert response.average == 4.0
+    assert response.count == 3
+
+
+def test_get_restaurant_rating_returns_zero_when_no_reviews(db_session):
+    restaurant_id = _create_restaurant(db_session)
+
+    response = get_restaurant_rating(restaurant_id=restaurant_id, db=db_session)
+
+    assert response.average == 0.0
+    assert response.count == 0

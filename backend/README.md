@@ -58,6 +58,12 @@ Request body:
 - `GET /restaurants/search?date=YYYY-MM-DD&time=HH:MM&party_size=INT&city=OPTIONAL`
 - Searches restaurants and returns availability for requested party size.
 
+- `GET /restaurants/{restaurant_id}/reviews?limit=10&offset=0`
+- Returns paginated reviews for the restaurant with user names, ratings, text, and created date (newest first).
+
+- `GET /restaurants/{restaurant_id}/rating`
+- Returns aggregate rating payload: `{ "average": 4.5, "count": 42 }`.
+
 ### Bookings
 - `POST /bookings`
 - Creates a pending booking with generated 6-char confirmation code.
@@ -70,6 +76,16 @@ Request body:
 
 - `POST /bookings/{booking_id}/deny`
 - Denies a booking unless already confirmed.
+
+- `POST /bookings/{booking_id}/review?user_id=INT`
+- Creates a verified review for a completed booking owned by the provided user id.
+- Request body:
+```json
+{
+  "rating": 5,
+  "review_text": "Excellent service"
+}
+```
 
 ### Integrations
 - `POST /webhooks/whatsapp`

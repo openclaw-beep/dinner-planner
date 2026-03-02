@@ -1,14 +1,14 @@
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.models.restaurant import Restaurant
 from app.models.review import Review
 from app.models.user import User
-from app.schemas.review import RestaurantReviewItem, RestaurantReviewsResponse
+from app.schemas.review import RestaurantRatingResponse, RestaurantReviewItem, RestaurantReviewsResponse
 from app.schemas.restaurant import RestaurantCreate, RestaurantRead, RestaurantSearchResponse, RestaurantUpdate
 from app.services.search_service import search_restaurants
 
@@ -101,4 +101,20 @@ def get_restaurant_reviews(
         ],
         limit=limit,
         offset=offset,
+    )
+
+
+@router.get("/{restaurant_id}/rating", response_model=RestaurantRatingResponse)
+def get_restaurant_rating(restaurant_id: int, db: Session = Depends(get_db)) -> RestaurantRatingResponse:
+    restaurant = db.scalar(select(Restaurant.id).where(Restaurant.id == restaurant_id))
+    if restaurant is None:
+        raise HTTPException(status_code=404, detail="Restaurant not found")
+
+    avg_rating, review_count = db.execute(
+        select(func.avg(Review.rating), func.count(Review.id)).where(Review.restaurant_id == restaurant_id)
+    ).one()
+
+    return RestaurantRatingResponse(
+        average=float(avg_rating) if avg_rating is not None else 0.0,
+        count=int(review_count),
     )
