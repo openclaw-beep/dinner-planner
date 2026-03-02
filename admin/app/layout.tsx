@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 
 import './globals.css';
+import '../styles/main.scss';
 
 export const metadata: Metadata = {
   title: 'Restaurant Admin Dashboard',
