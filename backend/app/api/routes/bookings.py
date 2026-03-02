@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
@@ -8,7 +8,9 @@ from app.db.session import get_db
 from app.models.booking import Booking
 from app.models.enums import BookingStatus
 from app.models.restaurant import Restaurant
+from app.models.review import Review
 from app.schemas.booking import BookingCreate, BookingRead, BookingStatusUpdateResponse
+from app.schemas.review import ReviewCreate, ReviewRead
 from app.services.booking_service import generate_confirmation_code, has_capacity_conflict
 
 router = APIRouter(prefix="/bookings", tags=["bookings"])
@@ -60,6 +62,45 @@ def create_booking(payload: BookingCreate, db: Session = Depends(get_db)) -> Boo
     db.commit()
     db.refresh(booking)
     return booking
+
+
+@router.post("/{booking_id}/review", response_model=ReviewRead, status_code=201)
+def create_booking_review(
+    booking_id: int,
+    payload: ReviewCreate,
+    user_id: int = Query(..., description="Authenticated user id"),
+    db: Session = Depends(get_db),
+) -> Review:
+    booking = db.scalar(select(Booking).where(Booking.id == booking_id))
+    if booking is None:
+        raise HTTPException(status_code=404, detail="Booking not found")
+
+    if booking.user_id != user_id:
+        raise HTTPException(status_code=403, detail="User does not own this booking")
+
+    booking_time = booking.reservation_at
+    if booking_time.tzinfo is None:
+        booking_time = booking_time.replace(tzinfo=timezone.utc)
+
+    if booking.status != BookingStatus.CONFIRMED or booking_time > datetime.now(timezone.utc):
+        raise HTTPException(status_code=400, detail="Booking must be completed before review")
+
+    existing = db.scalar(select(Review).where(Review.booking_id == booking.id))
+    if existing is not None:
+        raise HTTPException(status_code=409, detail="Booking already has a review")
+
+    review = Review(
+        booking_id=booking.id,
+        user_id=booking.user_id,
+        restaurant_id=booking.restaurant_id,
+        rating=payload.rating,
+        review_text=payload.review_text,
+        verified=True,
+    )
+    db.add(review)
+    db.commit()
+    db.refresh(review)
+    return review
 
 
 @router.get("/{booking_id}", response_model=BookingRead)
