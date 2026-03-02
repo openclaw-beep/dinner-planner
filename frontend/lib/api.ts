@@ -6,6 +6,8 @@ export type Restaurant = {
   address: string;
   capacity: number;
   average_price_per_guest: number;
+  average_rating?: number;
+  review_count?: number;
   available?: boolean;
 };
 
@@ -56,6 +58,40 @@ export type Booking = {
   status: string;
   confirmation_code: string;
   created_at: string;
+};
+
+export type Review = {
+  id: number;
+  rating: number;
+  text: string;
+  user_name: string;
+  created_at: string;
+  verified: boolean;
+};
+
+type RawReview = {
+  id?: number;
+  rating?: number;
+  stars?: number;
+  review_text?: string;
+  text?: string;
+  comment?: string;
+  user_name?: string;
+  user?: { name?: string };
+  created_at?: string;
+  date?: string;
+  verified?: boolean;
+  is_verified?: boolean;
+};
+
+export type GetRestaurantReviewsResponse = {
+  reviews: Review[];
+  hasMore: boolean;
+};
+
+export type CreateBookingReviewRequest = {
+  rating: number;
+  text?: string;
 };
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "https://dinner-api.domain.com";
@@ -121,4 +157,58 @@ export async function getRestaurantById(id: number): Promise<Restaurant> {
 export async function getRestaurantAvailability(id: number, date: string): Promise<RestaurantAvailabilityResponse> {
   const query = new URLSearchParams({ date });
   return request<RestaurantAvailabilityResponse>(`/restaurants/${id}/availability?${query.toString()}`);
+}
+
+function normalizeReview(raw: RawReview, index: number): Review {
+  return {
+    id: raw.id ?? index,
+    rating: raw.rating ?? raw.stars ?? 0,
+    text: raw.review_text ?? raw.text ?? raw.comment ?? "",
+    user_name: raw.user_name ?? raw.user?.name ?? "Guest",
+    created_at: raw.created_at ?? raw.date ?? new Date().toISOString(),
+    verified: Boolean(raw.verified ?? raw.is_verified),
+  };
+}
+
+export async function getRestaurantReviews(
+  id: number,
+  options: { page?: number; limit?: number } = {},
+): Promise<GetRestaurantReviewsResponse> {
+  const page = options.page ?? 1;
+  const limit = options.limit ?? 5;
+  const query = new URLSearchParams({
+    page: String(page),
+    limit: String(limit),
+  });
+
+  const data = await request<unknown>(`/restaurants/${id}/reviews?${query.toString()}`);
+
+  if (Array.isArray(data)) {
+    const reviews = data.map((item, index) => normalizeReview(item as RawReview, index));
+    return { reviews, hasMore: reviews.length === limit };
+  }
+
+  if (typeof data === "object" && data !== null) {
+    const record = data as Record<string, unknown>;
+    const reviewList = (record.reviews ?? record.items ?? record.data) as unknown;
+    const normalized = Array.isArray(reviewList)
+      ? reviewList.map((item, index) => normalizeReview(item as RawReview, index))
+      : [];
+    const hasMore = Boolean(record.has_more ?? record.hasMore ?? record.next_page);
+    return { reviews: normalized, hasMore };
+  }
+
+  return { reviews: [], hasMore: false };
+}
+
+export async function createBookingReview(bookingId: number, payload: CreateBookingReviewRequest): Promise<Review> {
+  const data = await request<RawReview>(`/bookings/${bookingId}/review`, {
+    method: "POST",
+    body: JSON.stringify({
+      rating: payload.rating,
+      review_text: payload.text?.trim() || undefined,
+    }),
+  });
+
+  return normalizeReview(data, bookingId);
 }
