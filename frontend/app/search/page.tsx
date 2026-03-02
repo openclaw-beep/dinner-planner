@@ -7,7 +7,7 @@ import { SearchFilters, SearchFiltersState } from "@/components/SearchFilters";
 import { RestaurantCard } from "@/components/restaurant-card";
 import { Restaurant, searchRestaurants } from "@/lib/api";
 import { enrichRestaurantData, SEEDED_RESTAURANTS } from "@/lib/restaurant-seed";
-import { normalizeTag } from "@/lib/restaurant-filters";
+import { getRestaurantPriceTier, normalizeTag, PriceTier } from "@/lib/restaurant-filters";
 
 function parseCsvParam(value: string | null): string[] {
   if (!value) {
@@ -33,7 +33,7 @@ export default function SearchPage() {
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<SearchFiltersState>(() => ({
     cuisines: parseCsvParam(params.get("cuisine")),
-    prices: [],
+    prices: parseCsvParam(params.get("price")) as PriceTier[],
     dietaryOptions: [],
     outdoorSeating: false,
     ambiance: [],
@@ -49,8 +49,12 @@ export default function SearchPage() {
       query.set("cuisine", filters.cuisines.join(","));
     }
 
+    if (filters.prices.length) {
+      query.set("price", filters.prices.join(","));
+    }
+
     router.replace(`${pathname}?${query.toString()}`, { scroll: false });
-  }, [date, time, partySize, filters.cuisines, pathname, router]);
+  }, [date, time, partySize, filters.cuisines, filters.prices, pathname, router]);
 
   useEffect(() => {
     let cancelled = false;
@@ -71,6 +75,7 @@ export default function SearchPage() {
           time,
           partySize,
           cuisines: filters.cuisines,
+          prices: filters.prices,
         });
 
         if (!cancelled) {
@@ -94,17 +99,23 @@ export default function SearchPage() {
     return () => {
       cancelled = true;
     };
-  }, [date, time, partySize, filters.cuisines]);
+  }, [date, time, partySize, filters.cuisines, filters.prices]);
 
   const filteredResults = useMemo(() => {
-    if (!filters.cuisines.length) {
-      return results;
+    let nextResults = [...results];
+
+    if (filters.cuisines.length) {
+      nextResults = nextResults.filter((restaurant) =>
+        filters.cuisines.some((filterCuisine) => normalizeTag(restaurant.cuisine).includes(filterCuisine)),
+      );
     }
 
-    return results.filter((restaurant) =>
-      filters.cuisines.some((filterCuisine) => normalizeTag(restaurant.cuisine).includes(filterCuisine)),
-    );
-  }, [results, filters.cuisines]);
+    if (filters.prices.length) {
+      nextResults = nextResults.filter((restaurant) => filters.prices.includes(getRestaurantPriceTier(restaurant)));
+    }
+
+    return nextResults;
+  }, [results, filters.cuisines, filters.prices]);
 
   function handleClearAll() {
     setFilters({

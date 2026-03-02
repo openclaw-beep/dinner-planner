@@ -1,10 +1,10 @@
 "use client";
 
-import { CUISINE_OPTIONS } from "@/lib/restaurant-filters";
+import { CUISINE_OPTIONS, PRICE_OPTIONS, PriceTier } from "@/lib/restaurant-filters";
 
 type SearchFiltersState = {
   cuisines: string[];
-  prices: string[];
+  prices: PriceTier[];
   dietaryOptions: string[];
   outdoorSeating: boolean;
   ambiance: string[];
@@ -16,7 +16,7 @@ type SearchFiltersProps = {
   onClearAll: () => void;
 };
 
-function toggleArrayValue(values: string[], target: string): string[] {
+function toggleArrayValue<T extends string>(values: T[], target: T): T[] {
   if (values.includes(target)) {
     return values.filter((value) => value !== target);
   }
@@ -66,6 +66,33 @@ export function SearchFilters({ value, onChange, onClearAll }: SearchFiltersProp
               >
                 <span aria-hidden>{option.icon}</span>
                 <span>{option.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="mt-4">
+        <p className="text-xs font-semibold uppercase tracking-wide text-ink/60">Price Range</p>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {PRICE_OPTIONS.map((option) => {
+            const isActive = value.prices.includes(option);
+
+            return (
+              <button
+                key={option}
+                type="button"
+                onClick={() =>
+                  onChange({
+                    ...value,
+                    prices: toggleArrayValue(value.prices, option),
+                  })
+                }
+                className={`inline-flex items-center rounded-full border px-4 py-1.5 text-sm font-semibold transition ${
+                  isActive ? "border-pine bg-pine text-white" : "border-ink/20 bg-white text-ink hover:border-pine/40 hover:bg-pine/5"
+                }`}
+              >
+                {option}
               </button>
             );
           })}
