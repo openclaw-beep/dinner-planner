@@ -2,3 +2,7 @@ node_modules/
 dist/
 .auth/
 *.log
+
+# Next.js build outputs
+frontend/.next/
+admin/.next/
