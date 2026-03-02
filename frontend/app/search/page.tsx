@@ -36,7 +36,7 @@ export default function SearchPage() {
     prices: parseCsvParam(params.get("price")) as PriceTier[],
     dietaryOptions: parseCsvParam(params.get("dietary")),
     outdoorSeating: params.get("outdoor") === "true",
-    ambiance: [],
+    ambiance: parseCsvParam(params.get("ambiance")),
   }));
 
   useEffect(() => {
@@ -61,8 +61,12 @@ export default function SearchPage() {
       query.set("outdoor", "true");
     }
 
+    if (filters.ambiance.length) {
+      query.set("ambiance", filters.ambiance.join(","));
+    }
+
     router.replace(`${pathname}?${query.toString()}`, { scroll: false });
-  }, [date, time, partySize, filters.cuisines, filters.prices, filters.dietaryOptions, filters.outdoorSeating, pathname, router]);
+  }, [date, time, partySize, filters.cuisines, filters.prices, filters.dietaryOptions, filters.outdoorSeating, filters.ambiance, pathname, router]);
 
   useEffect(() => {
     let cancelled = false;
@@ -86,6 +90,7 @@ export default function SearchPage() {
           prices: filters.prices,
           dietaryOptions: filters.dietaryOptions,
           outdoorSeating: filters.outdoorSeating,
+          ambiance: filters.ambiance,
         });
 
         if (!cancelled) {
@@ -109,7 +114,7 @@ export default function SearchPage() {
     return () => {
       cancelled = true;
     };
-  }, [date, time, partySize, filters.cuisines, filters.prices, filters.dietaryOptions, filters.outdoorSeating]);
+  }, [date, time, partySize, filters.cuisines, filters.prices, filters.dietaryOptions, filters.outdoorSeating, filters.ambiance]);
 
   const filteredResults = useMemo(() => {
     let nextResults = [...results];
@@ -135,8 +140,15 @@ export default function SearchPage() {
       nextResults = nextResults.filter((restaurant) => restaurant.outdoor_seating);
     }
 
+    if (filters.ambiance.length) {
+      nextResults = nextResults.filter((restaurant) => {
+        const tags = (restaurant.ambiance_tags ?? []).map(normalizeTag);
+        return filters.ambiance.some((ambianceTag) => tags.includes(ambianceTag));
+      });
+    }
+
     return nextResults;
-  }, [results, filters.cuisines, filters.prices, filters.dietaryOptions, filters.outdoorSeating]);
+  }, [results, filters.cuisines, filters.prices, filters.dietaryOptions, filters.outdoorSeating, filters.ambiance]);
 
   function handleClearAll() {
     setFilters({

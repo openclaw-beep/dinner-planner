@@ -46,6 +46,16 @@ export function RestaurantCard({ restaurant, date, time, partySize }: Restaurant
         </div>
       ) : null}
 
+      {restaurant.ambiance_tags?.length ? (
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {restaurant.ambiance_tags.slice(0, 3).map((tag) => (
+            <span key={tag} className="rounded-full bg-rose-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-rose-900">
+              {tag}
+            </span>
+          ))}
+        </div>
+      ) : null}
+
       <p className="mt-4 text-sm text-ink/80">{restaurant.address}</p>
       <p className="mt-1 text-sm text-ink/60">{restaurant.city}</p>
 

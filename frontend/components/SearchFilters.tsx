@@ -1,6 +1,6 @@
 "use client";
 
-import { CUISINE_OPTIONS, DIETARY_OPTIONS, PRICE_OPTIONS, PriceTier } from "@/lib/restaurant-filters";
+import { AMBIANCE_OPTIONS, CUISINE_OPTIONS, DIETARY_OPTIONS, PRICE_OPTIONS, PriceTier } from "@/lib/restaurant-filters";
 
 type SearchFiltersState = {
   cuisines: string[];
@@ -147,6 +147,35 @@ export function SearchFilters({ value, onChange, onClearAll }: SearchFiltersProp
           <span aria-hidden>{value.outdoorSeating ? "🌿" : "🪑"}</span>
           <span>Outdoor Seating</span>
         </button>
+      </div>
+
+      <div className="mt-4">
+        <p className="text-xs font-semibold uppercase tracking-wide text-ink/60">Ambiance</p>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {AMBIANCE_OPTIONS.map((option) => {
+            const isActive = value.ambiance.includes(option.value);
+
+            return (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() =>
+                  onChange({
+                    ...value,
+                    ambiance: toggleArrayValue(value.ambiance, option.value),
+                  })
+                }
+                className={`inline-flex items-center rounded-full border px-3 py-1.5 text-sm font-medium transition ${
+                  isActive
+                    ? "border-rose-700 bg-rose-700 text-white"
+                    : "border-ink/20 bg-white text-ink hover:border-rose-700/40 hover:bg-rose-50"
+                }`}
+              >
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
       </div>
     </section>
   );
