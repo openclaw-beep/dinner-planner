@@ -16,6 +16,23 @@ function formatDisplayTime(time: string): string {
   return `${hourDisplay}:${minutes} ${period}`;
 }
 
+function normalizeTimeForIso(time: string): string {
+  const trimmed = time.trim();
+  const fullMatch = trimmed.match(/^(\d{2}):(\d{2}):(\d{2})$/);
+  if (fullMatch) {
+    const [, hours, minutes, seconds] = fullMatch;
+    return `${hours}:${minutes}:${seconds}`;
+  }
+
+  const shortMatch = trimmed.match(/^(\d{2}):(\d{2})$/);
+  if (shortMatch) {
+    const [, hours, minutes] = shortMatch;
+    return `${hours}:${minutes}:00`;
+  }
+
+  return "";
+}
+
 export default function BookingPage() {
   const router = useRouter();
   const params = useParams<{ restaurantId: string }>();
@@ -41,7 +58,17 @@ export default function BookingPage() {
       return "";
     }
 
-    return new Date(`${date}T${selectedTime}:00`).toISOString();
+    const normalizedTime = normalizeTimeForIso(selectedTime);
+    if (!normalizedTime) {
+      return "";
+    }
+
+    const reservationDate = new Date(`${date}T${normalizedTime}`);
+    if (Number.isNaN(reservationDate.getTime())) {
+      return "";
+    }
+
+    return reservationDate.toISOString();
   }, [date, selectedTime]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
