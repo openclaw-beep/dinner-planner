@@ -8,6 +8,11 @@
   box-shadow: $shadow-glass;
 }
 
+@mixin glass-panel($bg-alpha: 0.09, $border-alpha: 0.2, $blur: 22px) {
+  @include glass-card($bg-alpha, $border-alpha, $blur);
+  border-radius: $radius-lg;
+}
+
 @mixin gradient-button($from: $color-gold, $to: $color-burgundy) {
   border: 0;
   color: $color-white;
