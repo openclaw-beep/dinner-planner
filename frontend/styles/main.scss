@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 @use 'variables';
 @use 'mixins';
 @use 'animations';
@@ -5,9 +9,29 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 
+:root {
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
 body {
   font-family: variables.$font-body;
   background: linear-gradient(180deg, #fefaf6 0%, #fff5ea 100%);
   color: variables.$color-ink;
   margin: 0;
+  min-height: 100vh;
+}
+
+input,
+select,
+textarea,
+button {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
 }
